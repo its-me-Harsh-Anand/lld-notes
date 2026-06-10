@@ -1,0 +1,540 @@
+1. Single Responsibility Principle
+	A class should have only one responsibility, not multiple business reasons to change
+	Ex: 
+	class OrderService {
+
+	    void placeOrder() {
+	        // validate order
+	        // calculate price
+	        // save to DB
+	        // send email
+	    }
+	} 
+
+	Above is a bad design as the OrderService has 4 different reasons to change. suppose saving to db(mysql) changes to db(mongodb), we have to change already tested OrderService for no reason
+
+	Correct:
+
+	class OrderValidator {
+	    void validate(Order order) {}
+	}
+
+	class PricingService {
+	    int calculatePrice(Order order) {}
+	}
+
+	class OrderRepository {
+	    void save(Order order) {}
+	}
+
+	class NotificationService {
+	    void sendOrderConfirmation(Order order) {}
+	}
+
+	Now orchestrate all these:
+	class OrderService {
+	    private OrderValidator validator;
+	    private PricingService pricingService;
+	    private OrderRepository repository;
+	    private NotificationService notificationService;
+
+	    void placeOrder(Order order) {
+	        validator.validate(order);
+	        pricingService.calculatePrice(order);
+	        repository.save(order);
+	        notificationService.sendOrderConfirmation(order);
+	    }
+	}
+
+2. Open Close Principle
+	This principle connects everything you’ve already learned:
+		Interfaces
+		Composition
+		Polymorphism
+		Avoiding if–else chains
+	wague definition : A software entity should be open for extension but closed for modification.
+	practical definition : We should be able to add new behavior to a system without modifying existing, tested code.
+
+	Ex:
+	class DiscountService {
+	    int calculateDiscount(String type, int amount) {
+	        if (type.equals("FESTIVAL")) {
+	            return amount * 10 / 100;
+	        } else if (type.equals("LOYALTY")) {
+	            return amount * 15 / 100;
+	        }
+	        return 0;
+	    }
+	}
+
+	1. As of now it does not violated SRP but it is fragile with respect to SRP because it has multiple reasons to change - each discount type change or addition requires modifying the same class
+	2. For adding a new discount type, need one more else if condition, which eventually is modifying the existing code and there is a risk of breaking old logic
+
+	Solution: Convert if else to a abstract class and implement all type of discounts
+	interface DiscountStrategy {
+		int calculate(int amount);
+	}
+	class FestivalDiscount implements DiscountStrategy {
+	    public int calculate(int amount) {
+	        return amount * 10 / 100;
+	    }
+	}
+	class LoyaltyDiscount implements DiscountStrategy {
+	    public int calculate(int amount) {
+	        return amount * 15 / 100;
+	    }
+	}
+
+	class DiscountService {
+		DiscountStrategy ds;
+		DiscountService(DiscountStrategy ds){
+			this.ds = ds;
+		}
+
+		public int calculateDiscount(int amount){
+			return ds.calculate(amount);
+		}
+	}
+
+	Key Takeaways:
+	In this way suppose a new discount type called "B1G1" introduced, we just have to implement a new class from DiscountStrategy and use it via DiscountService. No existing tested code needs to be changed
+
+	How we call DiscountService, call it in controller
+	public class Main {
+		public int mainController(int amount, String strategy){
+			StrategyFactory sf = new StrategyFactory(); 
+				// factory is useful if you want to get a particular object from a list of implementations of interface, referred as Factory pattern.
+			DiscountStrategy discountStrategy= sf.getDiscountStrategy(strategy)
+			DiscountService ds = new DiscountService(discountStrategy);
+			int discount = ds.calculateDiscount(100);
+		}
+	}
+
+	Question:
+	Suppose tomorrow:
+		A new discount type depends on user location
+		Existing discounts don’t
+	Where would you add this logic so that OCP is still respected?
+
+3. Liskov Substitution Principle
+	definition : Objects of a superclass should be replaceable with objects of its subclasses without affecting correctness.
+	final definition : If a class uses a base type, it should work correctly with any of its subtypes, without knowing which subtype it is.
+
+	class Rectangle {
+		protected int width;
+		protected int height;
+		
+		public void setWidth(int width) {
+			this.width = width;
+		}
+		public void setHeight(int height) {
+			this.height = height;
+		}
+		public int getArea() {
+			return width * height;
+		}
+	}
+
+	class Square extends Rectangle {
+		@Override
+		public void setWidth(int width) {
+			this.width = width;
+			this.height = width;
+		}
+		@Override
+		public void setHeight(int height) {
+			this.height = height;
+			this.width = width;
+		}
+	}
+
+	Rectangle rec = new Rectangle();
+	rec.setHeight(10);
+	rec.setWidth(5);
+	rec.getArea(); // 50 expected
+
+	Question : can we replace super class object Rectangle() with subclass object Square(), let's try it
+	Rectangle square = new Square();
+	square.setHeight(10);
+	square.setWidth(5);
+	square.getArea(); // will get 25, but expected was 50 because this is what the height and width being set
+
+	-> The behaviour of the class got changed when we replaced parent class object to subclass object, this should not happen.
+	-> Objects of a superclass should be replaceable with objects of its subclasses without altering the desirable properties of a program.
+
+	Solution: remove what is being changed and make it a separate class or interface, here the behaviour of Area is getting changed
+
+	interface Shape {
+		int getArea()
+	}
+
+	class Rectangle implements Shape {
+		protected int height;
+		protected int width;
+
+		public Rectangle(int height, int width){
+			this.height = height;
+			this.width = width;
+		}
+
+		@Override
+		public int getArea(){
+			return height * width;
+		}
+	}
+
+	class Square implements Shape {
+		protected int length;
+
+		public Square(int length){
+			this.length = length;
+		}
+
+		@Override
+		public int getArea(){
+			return length * length;
+		}
+	}
+
+	Shape s = new Rectangle(2,3);
+	s.getArea();
+	Shape s2 = new Square(2);
+	s2.getArea();
+
+	here, the behaviour of the Shape won't change, no matter which subclass of it we are using. We will now understand with real world example tomorrow
+
+	Real world example: Payment system
+	interface Payment {
+		void pay(int amount);
+	}
+
+	class CardPayment implements Payment {
+		void pay(int amount){
+			// pay here
+		}
+	}
+	class UPIPayment implements Payment {
+		void pay(int amount){
+			if(amount > 100000){
+				throw new Exception("Payment > 1 lakh not allowed");
+			}
+			// pay here
+		}
+	}
+
+	:: Client Side
+	Payment payment = new CardPayment();
+	payment.pay(500000)
+
+	Payment upiPayment = new UPIPayment();
+	upiPayment.pay(500000)
+		-> at this point it breaks, because it was promised to client that any amount will be paid no matter what payment method is used.
+		-> now to solve this, client have to do special handling like
+			if (payment instanceof UPIPayment) {
+			    // special handling
+			}
+		-> this special handling was not conveyed to the client earlier, or there was no way client could have got the knowledge of that check of 100000 in case of upi payment. which means client will not trust the abstraction which is a clear sign of broked LSP and useless abstraction
+
+	:: Solution
+		1. Move the constraint to the base class but it will restrict other class(CardPayment) that was working fine => bad approach
+		2. Split the abstraction
+			interface Payment {
+				int pay(int amount);
+			}
+			interface LimitedPayment extends Payment {
+				int maxAllowedAmount();
+			}
+
+			CardPayment implements Payment 
+			UPIPayment implements LimitedPayment
+
+		3. Create a new interface for the requirement (amount limiting policy)
+			interface PaymentMethod {
+				int pay(int amount);
+			}
+				public class CardPayment implements PaymentMethod {
+				    @Override
+				    public void pay(int amount) {
+				        System.out.println("Paid " + amount + " using Card");
+				    }
+				}
+
+				public class UPIPayment implements PaymentMethod {
+				    @Override
+				    public void pay(int amount) {
+				        System.out.println("Paid " + amount + " using UPI");
+				    }
+				}
+
+			interface AmountLimitPolicy {
+				boolean isAllowed(int amount);
+			}
+				public class NoLimitPolicy implements AmountLimitPolicy {
+				    @Override
+				    public boolean isAllowed(int amount) {
+				        return true;
+				    }
+				}
+
+				public class MaxAmountLimitPolicy implements AmountLimitPolicy {
+				    private final int maxAmount;
+
+				    public MaxAmountLimitPolicy(int maxAmount) {
+				        this.maxAmount = maxAmount;
+				    }
+
+				    @Override
+				    public boolean isAllowed(int amount) {
+				        return amount <= maxAmount;
+				    }
+				}
+
+			-> now use composition
+
+			class PaymentProcessor {
+				private PaymentMethod payment;
+    			private AmountLimitPolicy limitPolicy;
+
+    			public PaymentProcessor(PaymentMethod paymentMethod, AmountLimitPolicy limitPolicy) {
+			        this.paymentMethod = paymentMethod;
+			        this.limitPolicy = limitPolicy;
+			    }
+
+			    public void checkout(int amount) {
+			        if (!limitPolicy.isAllowed(amount)) {
+			            throw new IllegalArgumentException(
+			                "Payment amount exceeds allowed limit"
+			            );
+			        }
+			        paymentMethod.pay(amount);
+			    }
+			}
+
+			-> client code : At this point client is aware of payment method and limiting policy as well. Hence for any valid input the checkout won't surprise client, if there is any mistake then client is aware of that because nothing is hidden
+			1. 
+			PaymentProcessor cardProcessor =
+			    new PaymentProcessor(
+			        new CardPayment(),
+			        new NoLimitPolicy()
+			    );
+
+			cardProcessor.checkout(500_000);
+
+			2. 
+			PaymentProcessor upiProcessor =
+			    new PaymentProcessor(
+			        new UPIPayment(),
+			        new MaxAmountLimitPolicy(100_000)
+			    );
+
+			upiProcessor.checkout(50_000);   // OK
+			upiProcessor.checkout(150_000);  // throws exception and client exactly knows why because he is the one who set max limit
+
+			-> Let’s test substitution mentally:
+
+				PaymentMethod pm = new UPIPayment();
+				// OR
+				PaymentMethod pm = new CardPayment();
+
+				Both:
+					Accept same inputs
+					Perform payment
+					Do not surprise
+					Limits are handled outside of PaymentMethod.
+
+	-> Final thoughts
+		If a behavior is optional or conditional, it should be modeled as a separate capability, not hidden inside a subtype.
+		This confirms:
+			LSP
+			SRP
+			OCP
+			Composition over inheritance
+		If tomorrow:
+			Wallet has daily limits
+			UPI has per-transaction limits
+			Card has fraud rules
+
+			👉 Where do these go?
+			Answer:
+			New policies — not new payment subclasses.
+
+		Easy definiton : Liskov Substitution Principle states that any object of a subclass should be replaceable for its base class without altering the correctness or expected behavior of the program.
+		In practice, this means a subtype must fully honor the behavioral contract of the base type and must not introduce stronger constraints(like payment limit), weaker guarantees(like it will pay at any scenario), or surprise behavior(upi payment error at amount > 100000) for valid inputs.
+
+		Hard definition : LSP ensures that polymorphism is safe by guaranteeing that subclasses do not break the expectations established by the base abstraction.
+
+		A design violates LSP if:
+			A subclass throws exceptions for valid inputs
+			A subclass strengthens preconditions
+			A subclass weakens postconditions
+			Client code must special-case subtypes (instanceof)
+
+4. Interface Segregation Principle
+	An interface should represent a single capability.
+	If a class is forced to implement a method it cannot meaningfully support, the interface is wrongly designed.
+
+	Problem :
+		interface Worker {
+		    void work();
+		    void eat();
+		}
+
+		business requirements grows, now we have robot worker along with human worker
+
+		class RobotWorker implements Worker {
+			work() -> correct
+			eat() -> method not supported exception
+		}
+
+		The interface is forcing clients and implementers to depend on methods they do not need.
+		At a very first glance, LSP is broken here coz we can't replace super class with sub class
+			replace Worker with HumanWorker will work but with RobotWorker, it won't work. Real sign of breaking LSP.
+
+	Solution : 
+		An interface should represent a single capability.
+		If a class is forced to implement a method it cannot meaningfully support, the interface is wrongly designed.
+
+		interface Workable {
+			void work();
+		}
+
+		interface Eatable {
+			void eat();
+		}
+
+		class HumanWorker implements Workable, Eatable {
+			public void work(){
+				// do work
+			}
+
+			public void eat(){
+				// do eat
+			}
+		}
+
+		class RobotWorker implements Workable {
+		    public void work() {
+		    	// do work
+		    }
+		}
+
+		:: Client code
+		Workable human = new HumanWorker();
+		Workable robot = new RobotWorker(); // both are satisfying LSP as we can replace parent class with child class 
+
+		Eatable human = new HumanWorker();
+		Eatable robot = new RobotWorker(); // wrong, will give compile time error as robot worker is not eatable
+
+		:: Another client code that cares about eating
+
+		class Cafeteria {
+		    public void serveLunch(Eatable eater) {
+		        eater.eat();
+		    }
+		}
+
+		Cafeteria cafe = new Cafeteria();
+
+		Eatable human = new HumanWorker();
+		cafe.serveLunch(human);   // ✅ works
+
+		Eatable robot = new RobotWorker(); // ❌ compile-time error, even this is not possible, hence passing robot to serveLunch() will never happen as at very first instance, the object is not created
+
+		:: How it safeguard LSP
+			Objects of a subtype must be replaceable for the base type they claim to implement.
+
+			Key phrase: “they claim to implement”
+			RobotWorker claims to be a Workable
+			It does not claim to be Eatable
+			So substitution is checked only within the correct abstraction.
+
+			“If I assign this object to a variable of the interface type, can I call every method on that interface without fear?”
+			If yes → LSP-safe
+			If no → interface is wrong (ISP violation)
+
+5. Dependency Inversion Principle
+	Common definition : High-level modules should not depend on low-level modules.
+	Final definition : High-level business logic should depend on abstractions, not concrete implementations, so that implementation details can change without affecting core logic.
+
+	Problem :
+		class OrderService {
+
+		    private MySQLOrderRepository repository = new MySQLOrderRepository();
+
+		    public void placeOrder(Order order) {
+		        repository.save(order);
+		    }
+		}
+
+		class MySQLOrderRepository {
+		    public void save(Order order) {
+		        System.out.println("Saving order in MySQL");
+		    }
+		}
+
+		In the above implementation, OrderService which is a high level business logic is directly depending on a concrete implementation of low level class. Suppose in future mySql changed to mongoDB, we then implement a new mongoDB repository and then will use inside OrderService.
+		Scenario 1: Let's create OrderRepository interface and use that in OrderService
+
+		interface OrderRepository {
+		    void save(Order order);
+		}
+
+		class MySQLOrderRepository implements OrderRepository {
+		    public void save(Order order) {
+		        System.out.println("Saving order in MySQL");
+		    }
+		}
+
+		class MongoOrderRepository implements OrderRepository {
+		    public void save(Order order) {
+		        System.out.println("Saving order in MongoDB");
+		    }
+		}
+
+		class OrderService {
+		    private OrderRepository repository = new MySQLOrderRepository();
+		}
+
+		=> This still is violating DIP because again the OrderService is directly dependent on the implementation of interface OrderRepository.
+		In future if we want to use MongoOrderRepository, we have to make change unnecessarily in OrderService.
+
+		Question : 
+			Why is new MySQLOrderRepository() inside OrderService a DIP violation even though an interface exists?
+		Answer : 
+			OrderService is a high-level business module, but by instantiating MySQLOrderRepository directly, it becomes tightly coupled to a low-level implementation.
+			This violates DIP because a change in infrastructure (like switching to MongoDB) forces modification of already-tested business logic.
+			Instead, OrderService should depend only on the abstraction (OrderRepository), and the concrete implementation should be provided from outside.
+
+	Solution :
+		class OrderService {
+
+		    private OrderRepository repository;
+
+		    public OrderService(OrderRepository repository) {
+		        this.repository = repository;
+		    }
+
+		    public void placeOrder(Order order) {
+		        repository.save(order);
+		    }
+		}
+
+		-> Now in future, it does not depend directly on the implementation of OrderRepository but depend on high level interface i.e OrderRepository.
+
+		Question : Why this is call dependency inversion?
+		Answer:
+		OrderService  →  MySQLOrderRepository
+		OrderService  →  OrderRepository  ←  MySQLOrderRepository
+			The dependency direction flipped.
+			High-level depends on abstraction
+			Low-level depends on abstraction
+			No one depends on concrete details
+
+====================
+Summary
+====================
+S (SRP) → one business reason to change
+O (OCP) → extend behavior without modifying tested code
+L (LSP) → safe substitution without surprises
+I (ISP) → capability-based, truthful interfaces
+D (DIP) → business logic insulated from details

@@ -1,0 +1,102 @@
+"Every piece of knowledge must have a single, unambeguous, authoritative representation within a system" - The pragmatic programmer
+
+The DRY principle encourages you to avoid duplicating logic, behavior, or knowledge.
+It applies not only to code, but also to:
+	Business rules
+	Configuration
+	Data models
+	Documentation
+	Tests
+
+Whenever the same concept appears more than one place, we make our code redundant and that redundancy makes our system harder to maintain, vulnerable and prone to bug.
+Ask yourself a question: If i need to change this logic, how many places do I need to change? will I remember all those places? If not, then apply DRY.
+Now to apply DRY, simply create a utility class, write the logic there and use it everywhere.
+	For example: 
+	There are 3 system(authentication, payment, messaging) where we need to validate the email of a user. In future, suppose there is a new additional validation logic to email validation, how hard will it for you to add this logic to all 3 places, missing even one will cause a bug in your system. The solution is just to create a utility class, define the logic there and then use it everywhere.
+
+When is it okay to repeat?
+1. Avoid premature abstraction : abstraction created too early can be misleading or hard to maintain
+	ex: 
+	Earlier you see this duplication:
+
+		if (email == null || !email.contains("@")) {
+		    throw new Error();
+		}
+
+		if (adminEmail == null || !adminEmail.contains("@")) {
+		    throw new Error();
+		}
+
+	Later you abstracted it(premature abstraction):
+
+		void validateEmail(String email) {
+		    if (email == null || !email.contains("@")) {
+		        throw new Error();
+		    }
+		}
+
+	Now the change in business rule arrived:
+		- Admin email must end with @company.com
+		- User email can be anything
+
+	Now we end up doing this
+		void validateEmail(String email, boolean isAdmin) {
+		    if (isAdmin) {
+		        if (!email.endsWith("@company.com")) throw new Error();
+		    } else {
+		        if (!email.contains("@")) throw new Error();
+		    }
+		}
+
+		- this function lies, suppose in future a new requirement comes in, we will end up changing this GOD method
+		- instead what we have done is like below in utility class which could have been maintainable and very easy to grasp
+
+		void validateUserEmail(String email) {
+		    if (email == null || !email.contains("@")) {
+		        throw new Error();
+		    }
+		}
+
+		void validateAdminEmail(String email) {
+		    if (email == null || !email.endsWith("@company.com")) {
+		        throw new Error();
+		    }
+		}
+
+	- Remember below rules:
+		1. If you don’t know how something will change, don’t combine it.
+		2. Before making a common function, ask:
+			Will these always follow the same rules?
+			Will they change together?
+			If you’re not sure → keep them separate.
+
+2. If a line of code is extremely simple and unlikely to change, it may be better to repeat it rather than create a new layer of indirection.
+	suppose two services A and B are there which uses a common shared method(which obeys above rule), A and B both are different yet we are adding a new layer of indirection that we could have simply avoided it.
+
+=============================
+Repetation is good if
+=============================
+1. Different things that look similar
+	createUser()
+	createAdmin()
+	Are these doing different jobs? yes, then repeat
+
+2. You’re not sure how it will change
+	Do I clearly know future rules? if no, repeat
+
+3. Logic belongs to different areas
+	order validation
+	shipment validation
+	Are these in different features or modules? if yes, repeat
+
+4. Condition-based helper starts appearing
+	if (type == A) ...
+	else if (type == B) ...
+	immediately stop DRY here
+
+5. Code is more readable duplicated
+	if code is more readable than calling a generic function, then duplicate it
+
+========================================================================================
+
+The WET principle ("Write Everything Twice") and the "Rule of Three" are concepts in software development that offer guidelines for handling code duplication, contrasting with the famous DRY (Don't Repeat Yourself) principle. WET code embraces duplication initially, while the Rule of Three suggests waiting until code appears a third time before refactoring to abstract it, allowing for better understanding of true patterns and avoiding premature abstraction. Both WET and Rule of Three acknowledge that some initial repetition is natural and helpful for understanding requirements before committing to a complex abstraction. 

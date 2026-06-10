@@ -1,0 +1,252 @@
+UML - Unified Modelling Language
+Always create a uml diagram for a system you are building, once you are clear with UML, 90% of the task is done, you just have to implement those in code.
+Refer for diagram : https://algomaster.io/learn/lld/class-diagram
+
+1. Building Blocks of Class Diagram
+===============================================================================================================================================
+Visibility
+===============================================================================================================================================
+- : private
++ : public
+# : protected 
+~ : package level
+
+===============================================================================================================================================
+Multiplicity
+===============================================================================================================================================
+Multiplicity specifies the number of instances of one class that can be related to a single instance of another class.
+
+1 (exactly one), 0..1 (zero or one), * (zero or more), 1..* (one or more).
+
+example : 
+Email : String [0..1]
+Email class depends on String class, and it is related to 0 or 1 instances of String
+
+===============================================================================================================================================
+Attribute
+===============================================================================================================================================
+visibility name: type [multiplicity] = defaultValue
+
+example : 
+- name : String
+# age : int
++ email : String [0..1] = noemail@gmail.com
+
+email has a public access, string type, that can have 0 or 1 value, with defaults to noemail@gmail.com
+
+===============================================================================================================================================
+Method
+===============================================================================================================================================
+visibility name(parameterList): returnType
+
+example:
++ calculatePrice(int) : int
+
+calculate price is pulically visible, that takes one int argument and return int output
+
+===============================================================================================================================================
+Class
+===============================================================================================================================================
+Composed of attribute and methods
+
+---------------------------------------
+|              ClassName               |
+---------------------------------------
+| - privateField1 : DataType           |
+| - privateField2 : DataType           |
+| # protectedField : DataType          |
+| + publicField : DataType             |
+---------------------------------------
+| + constructor(param : Type)          |
+| + publicMethod(param : Type) : Type  |
+| - privateMethod() : Type             |
+| # protectedMethod() : Type           |
+---------------------------------------
+
+===============================================================================================================================================
+Interface
+===============================================================================================================================================
+
+<<interface>> is mandatory UML notation
+All methods are implicitly public abstract
+No instance variables
+
+---------------------------------------
+|          <<interface>>               |
+|             Flyable                  |
+---------------------------------------
+| + fly() : void                       |
+| + getMaxHeight() : int               |
+---------------------------------------
+
+===============================================================================================================================================
+Abstract class 
+===============================================================================================================================================
+
+<<abstract>> or italic class name
+Can contain:
+	fields
+	constructors
+	concrete methods
+	abstract methods
+
+---------------------------------------
+|         <<abstract>>                 |
+|             Bird                     |
+---------------------------------------
+| # name : String                      |
+| # weight : double                    |
+---------------------------------------
+| + Bird(name : String)                |
+| + eat() : void                       |
+| + move() : void {abstract}           |
+---------------------------------------
+
+
+===============================================================================================================================================
+Enum
+===============================================================================================================================================
+
+---------------------------------------
+|             <<enum>>                 |
+|           PaymentStatus              |
+---------------------------------------
+| PENDING                              |
+| SUCCESS                              |
+| FAILED                               |
+| CANCELLED                            |
+---------------------------------------
+
+
+2. Relationships in class diagram
+Total 6 main types of relationships are:
+	association, aggregation, composition, inheritance, implementation and dependency
+
+	1. Association : USES/KNOWS relationship
+		ClassA  ─────────  ClassB
+
+	2. Aggregation : HAS-A (weak relationship)
+		Whole  ◇────────  Part
+		Team  ◇────────  Player
+
+	3. Composition : HAS-A (strong relationship)
+		Whole  ◆────────  Part
+		House  ◆────────  Room
+
+	4. Inheritance : IS-A
+		Child  ─────────▷  Parent
+		Dog  ─────────▷  Animal
+
+	5. Interface Implementation (Realization) : CAN-DO
+		Class  - - - - ▷  Interface
+		Bird  - - - - ▷  Flyable
+
+	6. Dependency - USES TEMPORARILY
+		ClassA  - - - - - >  ClassB
+		OrderService  - - - - >  PaymentService
+
+===============================================================================================================================================
+Real life example:
+
+Library Management System 
+
+Requirements:
+	Library has books
+	Each book has id, title, author
+	Users can borrow and return books
+	A book can be borrowed by only one user at a time
+	System should track who borrowed which book
+
+1. Underline nouns
+	Library
+	Books
+	Users
+	System (to borrow or return)
+
+2. For each class, ask what data it must store
+	1. Library : 
+		books data, users data, system
+	2. Books :
+		id, title, author, isAvailable
+	3. Users :
+		id, name
+	4. System :
+		no attribute as it just perform action (borrow, return and who borrowed which book)
+
+3. For each requirement, who should be repoonsible
+	1. borrow and return book -> system
+	2. who borrowed which book -> system
+
+Final Classes with attributes and responsibilities
+
+	Library
+		- list of books : List<Book>
+		- list of users : List<User>
+		- System : System
+
+	Book
+		- id : int
+		- title : String
+		- author : String
+		- isAvailable : Boolean
+
+		+ Book(int id, String title, String author) : void
+		+ markBorrowed(boolean isBorrowed) : void
+		+ markReturned(boolean isReturned) : void
+
+
+	User
+		- id : int
+		- name : String
+
+		+ User(int id, String name): void
+
+	System 
+		- book to user map : Map<int, int>
+		- user to book map : Map<int, List<int>> 
+
+		+ borrowBook(int id): void
+		+ returnBook(int id): void
+		+ handleExchange(id): void  // this will update both maps
+
+--> In the above solution done by me, there are multiple mistakes
+	1. classes in UML must be a real life entity. (System is not a real life entity, only User, Book and Library are).
+	2. UML should not contain methods like internal implementation (handleExchange is internal implementation).
+	3. UML should have single source of truth (maps in System and Book.isAvailable() are depicting same thing related to availability)
+	4. Don't use maps, queues, cache, indexes, tables etc. in UML diagram, there are the part of internal implementations
+
++-------------------------------------+
+|        Library                      |
++-------------------------------------+
+| - books : List<Book>                |
+| - users : List<User>                |
++-------------------------------------+
+| + borrowBook(bookId, userId) : void |
+| + returnBook(bookId) : void         |
++-------------------------------------+
+
+
++----------------------------+
+|         Book               |
++----------------------------+
+| - id : int                 |
+| - title : String           |
+| - author : String          |
+| - borrowedBy : User        |
++----------------------------+
+| + markBorrowed(user) : void|
+| + markReturned() : void    |
++----------------------------+
+
+
++-----------------------+
+|          User         |
++-----------------------+
+| - id : int            |
+| - name : String       |
++-----------------------+
+
+Question : how will you get all the books borrowed by a user
+Answer : 
+	Keep list of books in User class. WRONG : as this will break single source of truth concept Book.borrowedBy and User.booksBorrowed list will convey same thing
+	Library has access of all books and book store data borrowedBy. loop through all book and get data. And for that, introduce a method in Library as + getBooksBorrowedBy(int userId) : List<Book>

@@ -1,0 +1,86 @@
+PHASE 1 — Foundations of Low Level Design (LLD)
+=======================================================================================================================================
+
+LLD, Low Level Design, means designing classes + defining responsibilites + relationships
+LLD is, given a problem, how would you structure your code so that it is clean, extensible, testable and maintainable.
+
+To do so, follow below approach:- (Design First, code later)
+1. Define Problem/ Clarify requirements
+2. Identify entities
+3. Define responsibilities
+4. Decide relationships
+5. Finally code
+
+OOP Principle
+1. Encapsulation : hide what can change (don't think as if you have to make entity private, think in way that what you want to hide 			((something that can be changed))
+
+	ex: public int amount - wrong
+
+		private int amount; - right
+		public int getAmount();
+
+2. Abstraction : Expose what, hide how
+	- Reduces tight coupling (achieve loose coupling)
+	- Enables Open–Closed Principle
+	- Allows independent evolution of implementations
+
+	Example:
+	public interface Payment {
+		void pay(int amount);
+	}
+
+	class CardPayment implements Payment {
+		void pay(int amount){
+			// handle payment 
+		}
+	}
+
+	- Consumers depend on what (pay)
+	- Not on how (card, UPI, wallet)
+
+	Suppose consumer is CheckoutService
+
+	public class CheckoutService {
+		private Payment payment;
+
+		public CheckoutService(Payment payment){
+			this.payment = payment
+		}
+
+		public void checkout(int amount){
+			payment.pay(amount)
+		}
+	}
+
+	- CheckoutService is a fully tested service, if we add a new payment method, we don't have to make any changes in checkout service. This means we are open for extension but closed for modification (OCR principle).
+	- Think, you have 3 independent type of paymentservice (Card, UPI, Crypto), you will end up exposing all to CheckoutService and multiple if-else condition based on payment type. For every new payment addition, you have to call that to CheckoutService and add a new elseif condition. By using a single Payment interface, we can extend a new payment service and use without changing stable business logic of CheckoutService.
+	- Now, if we are adding a new payment service, we still have to keep if else condition based on type. But we will not disturb the stable business logic, we will do that in someplace which can be changed, like controller, factory etc.
+		for example: 
+		
+		class PaymentFactory {
+		    static Payment getPayment(String type) {
+		        if ("CARD".equals(type)) return new CardPayment();
+		        if ("UPI".equals(type)) return new UPIPayment();
+		        throw new IllegalArgumentException();
+		    }
+		}
+
+		// wiring
+		Payment payment = PaymentFactory.getPayment(userChoice);
+		CheckoutService service = new CheckoutService(payment);
+		service.checkout(500);
+
+		In this way, we just need to add a if condition in factory, which will not impact already tested stable business logic.
+
+	Final note : The system is open for extension because we can add new Payment implementations, and closed for modification because the core business logic using the Payment interface does not need to change.
+
+3. Inheritance: Parent child relationship (is-a relationship)
+	bad to use in LLD, prefer composition. use only if is-a relationship is stable
+
+4. Polymorphism : Signature remain same but implementation different based on the class type
+	The above that we achieved in abstraction is the result of polymorphism
+	ex : 
+		Payment payment = new UpiPayment();
+		payment.pay(100);
+
+	you can have multiple payment service(upi, card, crypto etc) but you only have to instantiate with Payment and call payment's pay method. Based on the object you created, it will automatically call the pay method of that object/class.

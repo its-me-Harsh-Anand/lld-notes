@@ -1,0 +1,74 @@
+In LLD, we mainly care about:
+	How classes are connected (coupling)
+	How focused a class is internally (cohesion)
+
+Coupling means how one class knows about or depends on another class. High dependency = high coupling. Our aim is to achieve loose coupling, so that if there is a change in one class, we don't have to make changes in all other classes that this class is dependent on. Some of the ways to achieve is dependency inversion, inversion of control and may more that we read previously.
+
+Cohesion means how closely related the responsibilities inside a class are. Meaning, inside a class, all the function should be closely related. They all should be doing the tasks related to the work for which this class is created. Our aim is to achieve high cohesion.
+
+Coupling and cohesion both are inter-related, coupling exists at inter-class level and cohesion exist at within classes.
+
+Example of Coupling:
+ 	class MySQLDatabase {
+ 	    public void save(String data) {
+ 	        System.out.println("Saving to MySQL: " + data);
+ 	    }
+ 	}
+
+ 	class UserService {
+
+ 	    private MySQLDatabase database = new MySQLDatabase();
+
+ 	    public void registerUser(String user) {
+ 	        database.save(user);
+ 	    }
+ 	}
+
+	-> User service is tightly coupled/highly dependent on mySql database. In future, if we want another database to be used, we have to make changes in UserService. We can achieve loose coupling here by abstraction (making abstract database class) and dependency injection (inject database service to UserService via constructor, also known as constructor injection)
+
+	============
+	Solution:
+	============
+
+	interface Database {                // abstraction/interfaces
+		public void save(String data);
+	}
+	MySQLDatabase implements Database;
+	MongoDatabase implements Database;
+	AWSDatabase implements Database;
+
+	class UserService {
+		private Database db;
+		UserService(Database db){       // dependency injection
+			this.db = db
+		}
+
+		public void registerUser(String user){
+			db.save(user)
+		}
+	}
+
+Example of cohesion:
+	class UserManager {
+
+	    public void registerUser() {
+	        // user creation logic
+	    }
+
+	    public void sendEmail() {
+	        // email logic
+	    }
+
+	    public void generateInvoice() {
+	        // billing logic
+	    }
+
+	    public void logActivity() {
+	        // logging logic
+	    }
+	}
+
+	-> this above code is the example of low cohesion because all those 4 methods are not closely related to each other. They are doing different things, yet they are defined in same class. We can achieve high cohesion by introducing SRP, DI, IoC
+	-> Create interface of UserService that registers users, NotificationService(OCP) that send notification(email), BillingService that generate invoice and LoggingService that logs activity. Those were example of SRP and OCP. After defining all, orchestrate them all at one place (DI and Ioc)
+
+Good Design = High Cohesion (inside classes) + Low Coupling (between classes)

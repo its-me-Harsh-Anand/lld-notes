@@ -1,0 +1,10 @@
+KD Tree
+	A BST can be thought of as a structure for 1-dimensional data. Since all values lie on a number line, comparing a single value is enough to decide whether a query should go to the left or right subtree.
+
+	With multi-dimensional data, such as points (x, y), there is no natural ordering. For example, it is not obvious whether (1, 5) is smaller or larger than (3, 2). Because of this, a normal BST approach does not work.
+
+	The key idea of a KD Tree is to divide the space one dimension at a time. At each node, only one dimension is used for comparison. In a 2D KD Tree, the root may compare the X coordinate and split the space into left and right regions. The next level compares the Y coordinate and further divides those regions into upper and lower parts. By alternating between dimensions, the KD Tree gradually partitions the entire space into smaller regions, making nearest-neighbor searches efficient.
+
+The deepest intuition I would write is:
+	A BST partitions a line. A KD Tree partitions space. The tree is just a way to remember those partitions.
+

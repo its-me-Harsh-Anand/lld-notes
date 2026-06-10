@@ -1,0 +1,73 @@
+What Is the YAGNI Principle?
+	"Always implement things when you actually need them, never when you just foresee that you need them." — Ron Jeffries, co-founder of Extreme Programming
+
+YAGNI is a principle that encourages you to resist the temptation to build features or add flexibility until you are absolutely sure you need them.
+
+In simple terms: Don’t build for tomorrow. Build for today.
+
+YAGNI vs SOLID
+suppose there is a EmailService today and you created an interface so that you can use it for future SMSService as well - this is SOLID
+but when you are sure that the extension is not gonna happen in near future, follow YAGNI
+
+Ex of YAGNI
+Suppose you are working on a project that involves uploading user profile pictures.
+	Your current requirement is simple:
+		Accept an image
+		Resize it
+		Store it
+
+But you start thinking ahead.What if:
+
+	Tomorrow we need support for video uploads?
+	We may want to switch from local file storage to cloud storage?
+	We could support 3D avatars?
+
+	class ImageUploader {
+	    private final ImageResizer resizer;
+	    private final LocalStorage storage;
+
+	    public ImageUploader(ImageResizer resizer, LocalStorage storage) {
+	        this.resizer = resizer;
+	        this.storage = storage;
+	    }
+
+	    public void uploadImage(File imageFile) {
+	        File resized = resizer.resize(imageFile, 300, 300);
+	        storage.save(resized);
+	    }
+	}
+
+	YAGNI says : If the requirement to support cloud storage or video formats arises, that’s the time to refactor and extend — not before.
+========================================================================================================================================	
+Why Premature Work Is Harmful?
+	1. Wasted Time and Effort
+		Every hour spent building features that are not needed is time not spent building what actually matters.
+
+	2. Increased Complexity
+		Extra flexibility adds more moving parts. It becomes harder to understand, test, and modify your code.
+
+	3. Delayed Value
+		By working on “someday” features, you delay shipping the features users need today.
+
+	4. Higher Maintenance Costs
+		Even unused features have a cost. They can introduce bugs, require updates, and get in the way of refactoring.
+
+==========================================================================================================================================
+When to Bend the Rule?
+	Like all principles, YAGNI has exceptions. Sometimes, planning ahead is justified.
+	Here are cases where it’s acceptable to go beyond current needs:
+
+		1. Security and compliance requirements: You may need to prepare for data protection, auditing, or regulatory constraints up front.
+		2. Architecture with known long-term constraints: For example, if you are writing code for a high-availability system, some abstractions or patterns may be required from day one.
+		3. Reusable libraries or frameworks: If you are building tools for other developers, some flexibility may be expected.
+	Even then, be cautious. Avoid building for imagined scenarios.
+
+=========================================================================================================================================
+
+Suppose our search system is running on 3 algorithms, one of the algorithm depends on other team(DS) api call and in future, but not sure, other 2 algo will likely to call the other team api. Now the only requirement here is to make changes in only 1 algo, but you end up doing changes in other 2 even if it doesn't require currently.
+What will happen next?
+	1. you will end up adding bug in your code for other two algo which has nothing to do with current change
+	2. you will write test cases for the scenarios which even is not in use
+    3. tester end up testing other 2 algos even if no required
+    this whole process will take a lot of bandwidth of both QA and Dev. Suppose even if we have to make changes in both as a part of new requirement, then also, a round of sanity from dev and qa is needed and we are also not sure that the way we implemented in algo 1, the same way we have to implement in algo 2 and algo 3.
+    

@@ -1,0 +1,26 @@
+One-line definition
+	Build complex behavior by combining simple objects instead of inheriting from them.
+
+Or more famously:
+	"Favor composition over inheritance."
+
+Ex: 
+	Car → ElectricCar → Tesla → TeslaWithAutopilot → TeslaWithAutopilotV2
+	for every new feature, we have to implement many classes (class explosion)
+
+	Make interfaces based on behaviour it can perform and then use those in implementing concrete class.
+	ex: interface Flyable, interface Walkable
+		class Penguin implements Walkable
+		class Parrot implements Flyable, Walkable
+
+		now Parrot has both function to fly and walk, but penguin has only function to walk.
+
+		if you have used, inheritance like class Bird, and inherit Penguin and Parrot from it and applied penguin.fly(), this would be worse
+		as any how you have to implement function written in parent class, to your child class, even if it doesn't support
+
+Use inheritance only if
+	Clear IS-A relationship is there
+	Behavior will not change
+	Base class is stable
+
+Always prefer to use composition

@@ -1,0 +1,262 @@
+📘 LLD Notes — Inheritance vs Composition
+(Single Example: OrderService)
+
+1️⃣ Problem Statement (Real-World)
+
+We are building an Order Service.
+
+Business requirements evolve over time:
+    1. Order type: ONLINE, OFFLINE
+    2. Payment method: CARD, UPI, WALLET
+    3. Delivery type: HOME_DELIVERY, PICKUP
+
+Goal:
+    Clean design
+    Easy to extend
+    Minimal code changes
+
+2️⃣ Naive Implementation — if-else Chain (Initial Approach)
+
+class OrderService {
+
+    public void processOrder(String orderType,
+                             String paymentType,
+                             String deliveryType) {
+
+        if ("ONLINE".equals(orderType)) {
+
+            if ("CARD".equals(paymentType)) {
+                System.out.println("Online order paid via Card");
+            } else if ("UPI".equals(paymentType)) {
+                System.out.println("Online order paid via UPI");
+            } else if ("WALLET".equals(paymentType)) {
+                System.out.println("Online order paid via Wallet");
+            }
+
+            if ("HOME".equals(deliveryType)) {
+                System.out.println("Home delivery");
+            } else if ("PICKUP".equals(deliveryType)) {
+                System.out.println("Store pickup");
+            }
+
+        } else if ("OFFLINE".equals(orderType)) {
+
+            if ("CASH".equals(paymentType)) {
+                System.out.println("Offline order paid via Cash");
+            }
+
+            System.out.println("Store pickup");
+        }
+    }
+}
+
+❌ Problems with if-else
+
+    1. Violates Single Responsibility Principle
+    2. Violates Open-Closed Principle
+    3. Every new requirement → modify this class
+    4. Hard to test
+    5. Becomes a God class
+👉 Senior engineers avoid this
+
+3️⃣ First Refactor — Use Inheritance to Remove if-else
+
+Base Class
+
+abstract class OrderService {
+    public abstract void processOrder();
+}
+
+Order Type Split
+
+class OnlineOrderService extends OrderService {
+    @Override
+    public void processOrder() {
+        System.out.println("Processing online order");
+    }
+}
+
+class OfflineOrderService extends OrderService {
+    @Override
+    public void processOrder() {
+        System.out.println("Processing offline order");
+    }
+}
+
+
+✔ Order type if-else removed
+✔ Looks clean initially
+
+4️⃣ New Requirement — Payment Method
+Why we create new subclasses?
+
+If we add if-else inside OnlineOrderService, we go back to step 2 ❌
+So we extend behavior using inheritance.
+
+class OnlineCardOrderService extends OnlineOrderService {
+    @Override
+    public void processOrder() {
+        System.out.println("Online order with Card payment");
+    }
+}
+
+class OnlineUpiOrderService extends OnlineOrderService {
+    @Override
+    public void processOrder() {
+        System.out.println("Online order with UPI payment");
+    }
+}
+    
+
+✔ No conditionals
+✔ Polymorphism used properly
+
+5️⃣ Next Requirement — Delivery Type
+
+Now business says:
+    “Online card orders can be Home Delivery or Pickup”
+
+Where do we put this logic?
+    Not in OnlineOrderService
+    Not in OnlineCardOrderService (would need if-else again)
+
+So we create more subclasses 👇
+
+class OnlineCardHomeDeliveryOrderService
+        extends OnlineCardOrderService {
+
+    @Override
+    public void processOrder() {
+        System.out.println("Online Card Order with Home Delivery");
+    }
+}
+
+class OnlineCardPickupOrderService
+        extends OnlineCardOrderService {
+
+    @Override
+    public void processOrder() {
+        System.out.println("Online Card Order with Store Pickup");
+    }
+}
+
+6️⃣ Class Explosion Explained Clearly 💥
+
+Each new independent requirement multiplies classes.
+
+Dimensions:
+Dimension	Count
+Order Type	2
+Payment	    3
+Delivery	2
+Total classes:
+2 × 3 × 2 = 12 classes
+
+
+Example names:
+
+OnlineCardHomeDeliveryOrderService
+OnlineCardPickupOrderService
+OnlineUpiHomeDeliveryOrderService
+OnlineWalletPickupOrderService
+...
+
+
+❌ Too many classes
+❌ Hard to maintain
+❌ Factory creation becomes nightmare
+
+7️⃣ Where EXACTLY Change Happens (Important)
+
+Add a new payment: CRYPTO
+
+Required changes:
+    New subclasses for ONLINE
+    New subclasses for each delivery type
+    Update factory logic
+
+class OnlineCryptoHomeDeliveryOrderService extends OnlineOrderService {}
+class OnlineCryptoPickupOrderService extends OnlineOrderService {}
+
+🔥 Small feature → many new classes
+
+8️⃣ Root Cause (Key Insight)
+
+Inheritance tries to model multiple independent dimensions in a single hierarchy.
+
+But:
+    Payment
+    Delivery
+    Order type
+
+are orthogonal concerns, not parent-child relationships.
+
+9️⃣ Final Solution — Composition (Correct LLD)
+
+Separate Responsibilities
+
+interface Payment {
+    void pay();
+}
+
+class CardPayment implements Payment {
+    public void pay() {
+        System.out.println("Paid via Card");
+    }
+}
+
+class UpiPayment implements Payment {
+    public void pay() {
+        System.out.println("Paid via UPI");
+    }
+}
+
+interface Delivery {
+    void deliver();
+}
+
+class HomeDelivery implements Delivery {
+    public void deliver() {
+        System.out.println("Home delivery");
+    }
+}
+
+class PickupDelivery implements Delivery {
+    public void deliver() {
+        System.out.println("Store pickup");
+    }
+}
+
+OrderService Using Composition
+
+class OrderService {
+
+    private final Payment payment;
+    private final Delivery delivery;
+
+    public OrderService(Payment payment, Delivery delivery) {
+        this.payment = payment;
+        this.delivery = delivery;
+    }
+
+    public void processOrder() {
+        payment.pay();
+        delivery.deliver();
+        System.out.println("Order processed");
+    }
+}
+
+Usage (No Explosion)
+OrderService order = new OrderService(new CardPayment(), new HomeDelivery());
+order.processOrder();
+
+🔟 Why Composition Wins
+Aspect	Inheritance	Composition
+if-else	❌	❌
+Class explosion	❌	✅
+OCP	❌	✅
+SRP	❌	✅
+Runtime flexibility	❌	✅
+1️⃣1️⃣ Final Interview Summary (Memorize)
+
+“Using inheritance to avoid if-else leads to class explosion when multiple independent dimensions exist. Composition solves this by separating concerns and assembling behavior at runtime.”

@@ -1,0 +1,62 @@
+refer : https://youtu.be/nDRApysWzTc?si=p4uPknBvkFsgqUaU
+
+Problem :
+Money price = customer.getShoppingCart().getItems().get(0).getProduct().getPrice();
+
+OR within a OrderService
+
+class OrderService {
+	void displayFirstItemPrice(Customer customer) {
+	    Money price = customer.getShoppingCart().getItems().get(0).getProduct().getPrice();
+	    System.out.println("Price of the first item: " + price.getAmount());
+	}
+}
+
+
+
+here customer is object is interacting with shopping cart object, shopping cart object is interacting with product object
+	Customer -> ShoppingCart -> Product
+
+	When ever we see a dot chaining, ask yourself, whether is it a break of law of demeter
+================================================================================================================================================
+
+"Only talk to your immediate friends."" — Law of Demeter
+
+The Law of Demeter (also known as the Principle of Least Knowledge) says an object should only call methods on:
+	Itself
+	Its own fields
+	Its method parameters
+	Objects it creates
+That’s it.
+
+In plain terms: don't reach through one object to get to another. Any object should call the method of its immediate friend, now that immediate friend should call it's immediate friend
+===============================================================================================================================================
+
+Solution: just remove everything between object name and last function like 
+	customer.getShoppingCart().getItems().get(0).getProduct().getPrice();
+	remove .getShoppingCart().getItems().get(0).getProduct() and simply call customer.getPrice() , and think how can you get to this
+
+class OrderService {
+	Money price = customer.getFirstCartItemPrice();
+    System.out.println("Price of the first item: " + price.getAmoun
+}
+
+class Customer {
+	public Money getFirstItemPrice(){
+		return shoppingCart.getFirstItemPrice();
+	}
+}
+
+class ShoppingCart {
+	public Money getFirstItemPrice(){
+		return items.get(0).getProduct().getPrice();
+	}
+}
+
+here OrderService is calling Customer with loose coupling
+	 Customer is calling Shopping cart with loose coupling
+
+Law of demeter solves:
+	1. high coupling
+	2. encapsulation violation
+by delegating it's responsibility to the called friend object's function

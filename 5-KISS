@@ -1,0 +1,15 @@
+KISS - Keep It Simple, Stupid
+Definition : Most systems work best if they are kept simple rather than made complex. Therefore, simplicity should be a key goal in design.
+
+In software, this means writing code that is:
+	Easy to read
+	Easy to understand
+	Easy to change
+The simpler the code, the fewer the bugs. The fewer the bugs, the more reliable the system.
+
+Signs You’re Violating KISS
+	You added an interface before you needed multiple implementations
+	You used reflection for something a method call could handle
+	You introduced an extra layer “just in case” you might need it later
+	Your method has five optional parameters and deeply nested conditionals
+	You use recursion when a loop would be simpler
