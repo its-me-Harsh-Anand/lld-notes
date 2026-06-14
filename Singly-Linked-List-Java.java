@@ -163,4 +163,16 @@ public class SinglyLinkedList {
 	transient is used when a class implements Serializable and you don’t want certain fields to be serialized.
 
 4. When deleting/adding a node from the list, don't ever do value swapping, instead always maintain a prev, curr, next type of pointers, to change the pointing logically.
+
+public void pushFront : O(1)
+public void pushBack  : O(1)
+public void popFront  : O(1)
+public void popBack   : O(n)
+public int topFront   : O(1)
+public int topBack    : O(1)
+public boolean find   : O(n)
+public void erase     : O(n)
+public boolean isEmpty: O(1)
+
+popBack - this can be made O(1) by DoublyLinkedList
 */
