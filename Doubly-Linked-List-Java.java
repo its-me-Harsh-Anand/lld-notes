@@ -134,7 +134,39 @@ public class LinkedList {
 }
 
 /*
-Any node will be a part of GC garbage collection, if that is unreachable by Garbage Collector.
+1. Any node will be a part of GC garbage collection, if that is unreachable by Garbage Collector.
+2. For a custom fail-fast iterator : implement Iterable<> interface and implement iterator() class within it
+	@Override
+	public Iterator<Integer> iterator() {
+	    return new DLLIterator();
+	}
+	
+	private class DLLIterator implements java.util.Iterator<Integer> {
+
+	    private Node current = head;
+	    private int expectedModCount = modCount;
+
+	    @Override
+	    public boolean hasNext() {
+	        return current != null;
+	    }
+
+	    @Override
+	    public Integer next() {
+
+	        if (modCount != expectedModCount) {
+	            throw new java.util.ConcurrentModificationException();
+	        }
+
+	        if (current == null) {
+	            throw new java.util.NoSuchElementException();
+	        }
+
+	        int val = current.val;
+	        current = current.next;
+	        return val;
+	    }
+	}
 public void pushFront : O(1)
 public void pushBack  : O(1)
 public void popFront  : O(1)
