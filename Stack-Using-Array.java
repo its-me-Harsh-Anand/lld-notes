@@ -42,4 +42,5 @@ public class StackUsingArray {
 	v.pop_back() ==> v.remove(v.size()-1);
 	v.size() ==> v.size();
 	v[0] ==> v.get(i);
+4. For Stack in java, use ArrayDeque<> stack; stack.push(), stack.pop(), stack.peek()
 */

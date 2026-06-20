@@ -176,4 +176,12 @@ public int topBack    : O(1)
 public boolean find   : O(n)
 public void erase     : O(n)
 public boolean isEmpty: O(1)
+
+3. LinkedList in java is the implementation of List and Deque interface, which means it can be used as Array, Stack and Queue
+Below are common function of LinkedList in java
+
+LinkedList<Integer> list = new LinkedList<>();
+For List: addFirst, addLast, removeFirst, removeLast, getFirst, getLast, size, isEmpty
+For Stack: push, pop, top, isEmpty
+For Queue: offer, poll, peek, isEmpty
 */
