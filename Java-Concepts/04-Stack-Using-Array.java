@@ -1,3 +1,5 @@
+import java.util.Vector;
+
 public class StackUsingArray {
 	private Vector<Integer> v;
 	

@@ -93,4 +93,9 @@ Notes:
 	System.arraycopy(srcArray, srcArrayCopyFromIndex, destArray, destArrayPasteFromIndex, totalElementToCopy)
 4. ArrayList in java is the implementation of dynamic array and is not synchronized. meaning this is not thread safe. 
 	For synchronized and thread safety, use Vector in java, which is also the implementation of dynamic array.
+5. Common function from cpp vector to java vector/arrayList
+	v.push_back() ==> v.add()
+	v.pop_back() ==> v.remove(v.size()-1);
+	v.size() ==> v.size();
+	v[0] ==> v.get(i);
 */
